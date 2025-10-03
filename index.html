@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Proposta Personalizada – Go To Benefícios</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #2c3e50;
+      background: #f5f9ff;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .editor {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .proposal {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    h1, h2, h3 {
+      color: #007BFF;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #edf2ff;
+    }
+    .highlight {
+      background-color: #e6f2ff;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 15px 0;
+    }
+    .btn {
+      background: #007BFF;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+    @media print {
+      .editor, .btn {
+        display: none;
+      }
+      body {
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="editor">
+      <h2>✏️ Preencha os dados do cliente</h2>
+      <label for="empresa">Nome da Empresa</label>
+      <input type="text" id="empresa" placeholder="Ex: Empresa ABC Ltda" value="Sua Empresa">
+
+      <label for="gestor">Nome do Gestor/Contato</label>
+      <input type="text" id="gestor" placeholder="Ex: Maria Silva" value="Gestor">
+
+      <label for="vidas">Quantidade de Vidas</label>
+      <input type="number" id="vidas" min="1" value="250">
+
+      <label for="plano">Tipo de Plano</label>
+      <select id="plano">
+        <option value="individual-basico">Individual – só telemedicina</option>
+        <option value="familiar-basico">Familiar – só telemedicina</option>
+        <option value="individual-completo" selected>Individual – + Telepsicologia</option>
+        <option value="familiar-completo">Familiar – + Telepsicologia</option>
+      </select>
+
+      <label for="modelo">Modelo de Contratação</label>
+      <select id="modelo">
+        <option value="empresarial">Empresarial – Custeio 100%</option>
+        <option value="cooparticipacao">Cooparticipação – Divisão de Custo</option>
+        <option value="adesao">Adesão – Escolha Livre</option>
+      </select>
+
+      <button class="btn" onclick="gerarProposta()">Atualizar Proposta</button>
+    </div>
+
+    <div class="proposal" id="proposta">
+      <!-- A proposta será gerada aqui -->
+    </div>
+
+  </div>
+
+  <script>
+    const precos = {
+      50: { ib: 30, fb: 40, ic: 38, fc: 48 },
+      100: { ib: 29, fb: 39, ic: 36, fc: 46 },
+      500: { ib: 28, fb: 38, ic: 34, fc: 44 },
+      1000: { ib: 27, fb: 37, ic: 32, fc: 42 }
+    };
+
+    function getFaixa(vidas) {
+      if (vidas <= 50) return 50;
+      if (vidas <= 100) return 100;
+      if (vidas <= 500) return 500;
+      if (vidas <= 1000) return 1000;
+      return 'personalizado';
+    }
+
+    function getPreco(faixa, tipo) {
+      if (faixa === 'personalizado') return 'Sob análise';
+      const map = {
+        'individual-basico': 'ib',
+        'familiar-basico': 'fb',
+        'individual-completo': 'ic',
+        'familiar-completo': 'fc'
+      };
+      return `R$ ${precos[faixa][map[tipo]].toFixed(2).replace('.', ',')}`;
+    }
+
+    function getModeloTexto(modelo) {
+      const textos = {
+        empresarial: "A empresa arca com 100% do valor da assinatura. Colaboradores (autônomos, CLT e dependentes) recebem o benefício como um presente da empresa.",
+        cooparticipacao: "A empresa define a % que deseja custear (ex: 50%, 70%, etc.). O colaborador complementa o valor restante — sempre com desconto exclusivo para empresas parceiras.",
+        adesao: "A empresa não arca com custos, mas garante preços especiais abaixo da tabela aberta. O colaborador decide se adere ou não."
+      };
+      return textos[modelo];
+    }
+
+    function gerarProposta() {
+      const empresa = document.getElementById('empresa').value || 'Sua Empresa';
+      const gestor = document.getElementById('gestor').value || 'Gestor';
+      const vidas = parseInt(document.getElementById('vidas').value) || 250;
+      const plano = document.getElementById('plano').value;
+      const modelo = document.getElementById('modelo').value;
+
+      const faixa = getFaixa(vidas);
+      const preco = getPreco(faixa, plano);
+      const modeloTexto = getModeloTexto(modelo);
+
+      const nomesPlanos = {
+        'individual-basico': 'Individual – só telemedicina',
+        'familiar-basico': 'Familiar – só telemedicina',
+        'individual-completo': 'Individual – + Telepsicologia',
+        'familiar-completo': 'Familiar – + Telepsicologia'
+      };
+
+      const planoNome = nomesPlanos[plano];
+
+      let tabela = '';
+      if (faixa !== 'personalizado') {
+        tabela = `
+          <table>
+            <thead>
+              <tr>
+                <th>Faixa</th>
+                <th>Individual<br>(só telemedicina)</th>
+                <th>Familiar<br>(só telemedicina)</th>
+                <th>Individual<br>(+ Telepsicologia)</th>
+                <th>Familiar<br>(+ Telepsicologia)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Até 50</td><td>R$ 30,00</td><td>R$ 40,00</td><td>R$ 38,00</td><td>R$ 48,00</td></tr>
+              <tr><td>Até 100</td><td>R$ 29,00</td><td>R$ 39,00</td><td>R$ 36,00</td><td>R$ 46,00</td></tr>
+              <tr><td>Até 500</td><td>R$ 28,00</td><td>R$ 38,00</td><td>R$ 34,00</td><td>R$ 44,00</td></tr>
+              <tr><td>Até 1.000</td><td>R$ 27,00</td><td>R$ 37,00</td><td>R$ 32,00</td><td>R$ 42,00</td></tr>
+            </tbody>
+          </table>
+        `;
+      } else {
+        tabela = `<p><em>Valores para mais de 1.000 vidas sob análise personalizada.</em></p>`;
+      }
+
+      document.getElementById('proposta').innerHTML = `
+        <header style="text-align:center; margin-bottom:20px;">
+          <h1>PROPOSTA COMERCIAL</h1>
+          <p><strong>Go To Benefícios</strong> – Pioneiros em Benefícios Corporativos para Profissionais Autônomos</p>
+        </header>
+
+        <p>Prezado(a) <strong>${gestor}</strong>,</p>
+
+        <p>Agradecemos pela oportunidade de apresentar nossa solução para <strong>${empresa}</strong>.</p>
+
+        <h2>SOLUÇÃO PERSONALIZADA</h2>
+        <p>Com base na sua necessidade, recomendamos o seguinte plano:</p>
+        <div class="highlight">
+          <strong>Plano Selecionado:</strong> ${planoNome}<br>
+          <strong>Quantidade Estimada:</strong> ${vidas} vidas<br>
+          <strong>Valor Estimado por Vida:</strong> <strong>${preco}</strong><br>
+          <strong>Modelo de Contratação:</strong> ${modeloTexto}
+        </div>
+
+        <h2>NOSSOS BENEFÍCIOS</h2>
+        <ul>
+          <li><strong>Telemedicina 24h</strong> com clínico geral, pediatra e médico de família — ilimitado</li>
+          <li><strong>+20 especialidades médicas</strong> (psiquiatria, cardiologia, ginecologia, etc.)</li>
+          <li><strong>Telepsicologia</strong> (até 2 consultas/mês inclusas nos planos completos)</li>
+          <li><strong>Consultoria Jurídica, Financeira e Contábil</strong></li>
+          <li><strong>Clube de Descontos</strong> em 10.000+ estabelecimentos</li>
+          <li><strong>Sorteios e ações de cidadania</strong></li>
+        </ul>
+
+        <h2>TABELA DE PREÇOS DE REFERÊNCIA</h2>
+        ${tabela}
+
+        <h2>PRÓXIMOS PASSOS</h2>
+        <p>Estamos prontos para personalizar a implementação, treinar sua equipe e entregar uma experiência de pertencimento para seus colaboradores.</p>
+
+        <div style="margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
+          <p><strong>Go To Benefícios</strong><br>
+          📧 contato@gotobeneficios.com | 🌐 www.gotobeneficios.com | 📱 (41) 9 98846-3096</p>
+        </div>
+      `;
+    }
+
+    // Gerar proposta inicial
+    gerarProposta();
+  </script>
+</body>
+</html>
