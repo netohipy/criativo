@@ -59,49 +59,39 @@
 </div>
 
 <div class="box">
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Chat Criativo em Tempo Real</title>
-<style>
-  body { font-family: Arial; display: flex; gap: 20px; padding: 20px; background: #f4f4f4; }
-  .box { background: white; padding: 10px; border-radius: 10px; width: 45%; box-shadow: 0 0 5px #ccc; }
-  textarea { width: 100%; height: 150px; resize: none; margin-top: 10px; font-size: 16px; }
-</style>
-</head>
-<body>
+import { WebSocketServer } from 'ws';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-<div class="box">
-  <h2>Indivíduo 1</h2>
-  <textarea id="input1" placeholder="Digite aqui..."></textarea>
-</div>
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-<div class="box">
-  <h2>Indivíduo 2</h2>
-  <textarea id="input2" placeholder="Digite aqui..."></textarea>
-</div>
-
-<script>
-const socket = new WebSocket(`wss://${window.location.host}`);
-
-const input1 = document.getElementById('input1');
-const input2 = document.getElementById('input2');
-
-input1.addEventListener('input', () => {
-  socket.send(JSON.stringify({ sender: '1', text: input1.value }));
+const server = http.createServer((req, res) => {
+  const filePath = path.join(__dirname, 'index.html');
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      res.end('Arquivo não encontrado');
+    } else {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(data);
+    }
+  });
 });
 
-input2.addEventListener('input', () => {
-  socket.send(JSON.stringify({ sender: '2', text: input2.value }));
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws) => {
+  ws.on('message', (msg) => {
+    wss.clients.forEach((client) => {
+      if (client.readyState === ws.OPEN && client !== ws) {
+        client.send(msg);
+      }
+    });
+  });
 });
 
-socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.sender === '1') input1.value = data.text;
-  if (data.sender === '2') input2.value = data.text;
-};
-</script>
-
-</body>
-</html>
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
